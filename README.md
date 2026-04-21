@@ -10,6 +10,10 @@ Convenções de estrutura, nomenclatura e manutenção estão em [`CLAUDE.md`](.
 2. Abrir o `README.md` do prompt para entender objetivo, variáveis esperadas e limitações.
 3. Copiar o conteúdo do `prompt.md` e substituir os placeholders `{{nome_variavel}}` pelos valores desejados.
 
+## Adicionando um prompt
+
+Use o slash command [`/catalogar`](./.claude/commands/catalogar.md) passando o texto do prompt como argumento. Ele analisa, propõe organização (categoria, slug, frontmatter) e, após sua aprovação, escreve os arquivos e atualiza os índices — sem commitar. Convenções completas em [`CLAUDE.md`](./CLAUDE.md).
+
 ## Categorias
 
 ### [Desenvolvimento](./desenvolvimento/)
