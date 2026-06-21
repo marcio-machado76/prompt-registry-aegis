@@ -41,12 +41,6 @@ Use o slash command [`/catalogar`](./.claude/commands/catalogar.md) passando o t
 
 ## Categorias
 
-### [Desenvolvimento](./desenvolvimento/)
-
-Escrita, revisão e refatoração de código, design de APIs e arquitetura, debugging, testes e documentação técnica.
-
-_Nenhum prompt cadastrado ainda._
-
 ### [DevOps](./devops/)
 
 Pipelines de CI/CD, containers, orquestração, infraestrutura como código, observabilidade, SRE e segurança operacional.
@@ -58,29 +52,10 @@ Pipelines de CI/CD, containers, orquestração, infraestrutura como código, obs
 - [migracao-batch-para-streaming](./devops/migracao-batch-para-streaming/) — cadeia de prompts para migrar um pipeline batch → streaming.
 - [networkpolicy-sentinel](./devops/networkpolicy-sentinel/) — endurecimento de uma NetworkPolicy permissiva (default-deny).
 
-### [Produtividade](./produtividade/)
-
-Organização pessoal, gestão de tempo e tarefas, rotina, hábitos, foco e decisões sobre fluxo de trabalho individual.
-
-_Nenhum prompt cadastrado ainda._
-
-### [Finanças](./financas/)
-
-Orçamento, investimentos, planejamento financeiro, impostos e apoio a decisões financeiras.
-
-_Nenhum prompt cadastrado ainda._
-
-### [Criação de Conteúdo](./criacao-conteudo/)
-
-Roteiros, artigos, posts para redes sociais, material didático e copy de divulgação.
-
-_Nenhum prompt cadastrado ainda._
-
-<!--
-Ao adicionar um prompt, substituir "Nenhum prompt cadastrado ainda" pela lista:
-
-- [nome-do-prompt](./<slug-da-categoria>/<slug-do-prompt>/) — o que o prompt faz, em uma linha.
--->
+> As demais categorias do template (`desenvolvimento/`, `produtividade/`, `financas/`,
+> `criacao-conteudo/`) foram removidas: este repositório é o playbook operacional da Aegis e
+> todos os prompts são de DevOps. A convenção "uma categoria por domínio" segue valendo — uma
+> nova categoria pode ser criada quando houver prompts de outro domínio.
 
 ## Contribuindo
 
