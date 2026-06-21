@@ -1,0 +1,80 @@
+# CP10 — pipeline de avaliação contínua dos prompts (promptfoo em GitHub Actions).
+# Decisões de gate (justificativa comparada em .github/workflows/JUSTIFICATIVA.md):
+#   a1) só os asserts DETERMINÍSTICOS barram o build; o juiz LLM roda mas é informativo
+#       (não-determinismo do juiz não deve reprovar um PR por flutuação).
+#   b1) roda a SUÍTE INTEIRA a cada PR (suíte pequena; custo em centavos; simples e seguro).
+#   C ) chaves em GitHub Secrets; gatilho em pull_request + execução manual (workflow_dispatch).
+name: promptfoo
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write   # necessário para comentar o resultado no PR
+
+jobs:
+  promptfoo:
+    runs-on: ubuntu-latest
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # GATE — asserts determinísticos. `set -e` faz qualquer reprovação derrubar o build (a1).
+      # Roda os três prompts de saída estruturada (b1: suíte inteira).
+      - name: Suite deterministica (barra o build)
+        id: deterministic
+        run: |
+          set -e
+          for cfg in \
+            devops/triagem-de-pods/promptfooconfig.yaml \
+            devops/nota-de-triagem/promptfooconfig.yaml \
+            devops/networkpolicy-sentinel/promptfooconfig.yaml; do
+            echo "::group::promptfoo eval $cfg"
+            npx promptfoo@latest eval -c "$cfg" --no-cache
+            echo "::endgroup::"
+          done
+
+      # INFORMATIVO — gate de qualidade por LLM-as-judge. continue-on-error: NÃO derruba o build
+      # (a1). Serve de sinal de qualidade no PR sem reprovar por flutuação do juiz.
+      - name: Gate de qualidade LLM-as-judge (informativo)
+        continue-on-error: true
+        run: |
+          for cfg in \
+            devops/causa-raiz/promptfooconfig.yaml \
+            devops/estrategia-de-backpressure/promptfooconfig.yaml \
+            devops/migracao-batch-para-streaming/promptfooconfig.yaml; do
+            echo "::group::juiz (informativo) $cfg"
+            npx promptfoo@latest eval -c "$cfg" --no-cache || true
+            echo "::endgroup::"
+          done
+
+      # Comenta o resultado direto no PR (mesmo se o gate falhar — always()).
+      - name: Comentar resultado no PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const det = '${{ steps.deterministic.outcome }}';
+            const body = [
+              '### promptfoo — resultado da suíte',
+              '',
+              `- **Gate determinístico (barra o build):** ${det === 'success' ? '✅ passou' : '❌ falhou'}`,
+              '- **Juiz LLM (informativo, não barra o build):** executado — ver resultado nos logs do job.',
+              '',
+              '_Determinístico:_ triagem-de-pods · nota-de-triagem · networkpolicy-sentinel.',
+              '_Juiz (informativo):_ causa-raiz · estrategia-de-backpressure · migracao-batch-para-streaming.',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });

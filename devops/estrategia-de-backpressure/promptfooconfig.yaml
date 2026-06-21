@@ -1,0 +1,42 @@
+# CP10 — teste informativo (LLM-as-judge) do prompt de backpressure (saída aberta).
+# INFORMATIVO: não barra o build (decisão a1); é sinal de qualidade no PR.
+# Padrão de juiz idêntico ao CP09 (causa-raiz). Juiz: Gemini 2.5-flash; gerador: Groq/Llama.
+# Exec: a partir desta pasta, `npx promptfoo@latest eval --no-cache`.
+description: CP10 juiz informativo — estratégia de backpressure
+
+prompts:
+  - file://prompt.md
+
+providers:
+  - groq:llama-3.3-70b-versatile     # gerador (independente do juiz)
+
+tests:
+  - description: Cenário do Relay (CP04)
+    options:
+      provider: google:gemini-2.5-flash   # o JUIZ
+    vars:
+      cenario: |
+        Relay (barramento de eventos):
+        - throughput sustentado: 180k msgs/s
+        - pico observado no incidente: 320k msgs/s por 25min
+        - retenção atual: 4h
+        - consumidores: Forge (ingestão), Sentinel (alerting em tempo real)
+
+        Restrições do time:
+        - alerting do Sentinel não pode atrasar mais que 60s (SLA com cliente)
+        - ingestão do Forge pode atrasar até 15min sem violar SLA
+        - orçamento de infra do trimestre já está 8% acima do previsto
+        - perda de telemetry é inaceitável (o barramento antigo perdia mensagens sob pico)
+    assert:
+      - type: llm-rubric
+        value: |
+          Avalie esta DECISÃO DE BACKPRESSURE para um barramento de eventos. Considere de boa
+          qualidade (pass=true) se ela:
+          - compara pelo menos 3 estratégias distintas, com prós E contras reais de cada uma;
+          - avalia cada estratégia contra as restrições do cenário (SLA do consumidor crítico,
+            tolerância do consumidor que pode atrasar, não-perda de mensagens, orçamento);
+          - termina com uma recomendação fundamentada, declarando os trade-offs aceitos e o que
+            foi descartado e por quê;
+          - NÃO entrega uma resposta única sem comparar alternativas.
+          Reprove (pass=false) se dá resposta única, ignora restrições explícitas, ou não pondera
+          trade-offs. Justifique citando o que faltou.
