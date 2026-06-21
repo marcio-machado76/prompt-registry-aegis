@@ -1,17 +1,17 @@
-# Catálogo de prompts
+# Playbook de IA operacional — Aegis
 
-Coleção de prompts em Markdown organizados por categoria/área de domínio. Cada prompt vive em sua própria pasta, contendo o arquivo `prompt.md` (texto puro, pronto para copiar e colar) e um `README.md` com metadados, variáveis e exemplos de uso.
+Biblioteca de prompts de engenharia da Aegis, **versionada, testada e tratada como código**:
+cada prompt é parametrizável (recebe os dados por parâmetro), documentado e coberto por testes
+automatizados, para que qualquer pessoa do time pegue e confie no resultado — e o ativo
+sobreviva à saída de quem o escreveu.
 
-Este repositório faz parte do material dos projetos da pós-graduação em AIOps e Inteligência Artificial com Engenharia Cloud: [pos.veronez.io/pos-aiops](https://pos.veronez.io/pos-aiops/).
+> Montado **a partir do template [prompt-registry](https://github.com/fabricioveronez/prompt-registry)**
+> (usado como ponto de partida e referência de convenções; a linhagem está preservada no
+> histórico de commits). Daqui em diante o repositório fala como o playbook da Aegis.
 
-Convenções de estrutura, nomenclatura e manutenção estão em [`CLAUDE.md`](./CLAUDE.md).
+## Origem e mapeamento (Checkpoints 01–06)
 
-## Playbook de IA operacional (Aegis)
-
-Este repositório é um playbook de IA para engenharia, montado **a partir do template
-[prompt-registry](https://github.com/fabricioveronez/prompt-registry)** (usado como ponto de
-partida e referência de convenções). Os seis prompts dos Checkpoints 01–06 foram mapeados
-nas convenções do template assim:
+Os seis prompts nasceram dos checkpoints do desafio e foram mapeados nas convenções do template:
 
 - **Categoria → pasta na raiz:** todos os prompts são operacionais, então caem em
   [`devops/`](./devops/) — sem aninhar categorias.
@@ -20,30 +20,37 @@ nas convenções do template assim:
 - **`{{placeholders}}` = `inputs` do frontmatter:** os parâmetros de cada prompt (o snapshot,
   o alerta, os artefatos, o cenário) aparecem como `{{variavel}}` no `prompt.md` e estão
   documentados no campo `inputs`. É onde "todo prompt é parametrizável" encontra a estrutura.
-- **`versao: 1.0.0` em todo prompt:** versão inicial; daqui pra frente toda mudança passa por
-  commit semântico com escopo na categoria (ex.: `feat(devops): adiciona prompt de triagem de pods`).
 - **Desvio consciente — cadeia:** `migracao-batch-para-streaming/` é uma cadeia de prompts
   (CP05), então usa uma subpasta `prompts/` com os elos numerados, em vez de um único
-  `prompt.md`. O frontmatter da cadeia fica no `README.md` da pasta. Está registrado lá.
-- **Testes viajam junto com o prompt:** a partir do CP08, cada prompt de saída estruturada
-  ganha um `promptfooconfig.yaml` ao lado do `prompt.md`; o gate de qualidade (CP09) e o
-  pipeline (CP10) completam a virada de "texto solto" para "ativo testado do time".
+  `prompt.md`. O frontmatter da cadeia fica no `README.md` da pasta.
 
-## Como usar
+## Estrutura e convenções
 
-1. Navegar até a categoria de interesse.
-2. Abrir o `README.md` do prompt para entender objetivo, variáveis esperadas e limitações.
-3. Copiar o conteúdo do `prompt.md` e substituir os placeholders `{{nome_variavel}}` pelos valores desejados.
+```
+<categoria>/
+  <nome-do-prompt>/
+    prompt.md            # frontmatter + texto puro do prompt (placeholders {{variavel}})
+    README.md            # mesmo frontmatter + doc humana (objetivo, uso, exemplo, limitações)
+    promptfooconfig.yaml # testes do prompt (onde aplicável) — viajam junto com o prompt
+```
 
-## Adicionando um prompt
-
-Use o slash command [`/catalogar`](./.claude/commands/catalogar.md) passando o texto do prompt como argumento. Ele analisa, propõe organização (categoria, slug, frontmatter) e, após sua aprovação, escreve os arquivos e atualiza os índices — sem commitar. Convenções completas em [`CLAUDE.md`](./CLAUDE.md).
+- **Categoria** = pasta na raiz, em `kebab-case`, uma por domínio, sem aninhar.
+- **Prompt** = subpasta nomeada pelo **resultado**, não pela técnica.
+- **`prompt.md`** = frontmatter YAML + o texto do prompt, com os parâmetros como `{{variavel}}`.
+- **`README.md`** = o mesmo frontmatter + documentação humana (objetivo, quando usar, exemplo,
+  limitações, curadoria).
+- **Frontmatter** (idêntico nos dois arquivos): `nome`, `descricao`, `versao` (semver, inicia
+  em `1.0.0`), `tags`, `inputs` (lista de parâmetros, cada um com `nome` e `descricao`).
+- **Versionamento:** o campo `versao` de cada prompt + **commits semânticos** com escopo na
+  categoria (ex.: `feat(devops): adiciona prompt de triagem de pods`). Os índices (este README
+  e o da categoria) são atualizados junto com a mudança.
 
 ## Categorias
 
 ### [DevOps](./devops/)
 
-Pipelines de CI/CD, containers, orquestração, infraestrutura como código, observabilidade, SRE e segurança operacional.
+Pipelines de CI/CD, containers, orquestração, infraestrutura como código, observabilidade,
+SRE e segurança operacional.
 
 - [triagem-de-pods](./devops/triagem-de-pods/) — triagem de pods Kubernetes a partir de um snapshot do cluster.
 - [nota-de-triagem](./devops/nota-de-triagem/) — nota padronizada de alerta a partir de um alerta cru.
@@ -52,11 +59,35 @@ Pipelines de CI/CD, containers, orquestração, infraestrutura como código, obs
 - [migracao-batch-para-streaming](./devops/migracao-batch-para-streaming/) — cadeia de prompts para migrar um pipeline batch → streaming.
 - [networkpolicy-sentinel](./devops/networkpolicy-sentinel/) — endurecimento de uma NetworkPolicy permissiva (default-deny).
 
-> As demais categorias do template (`desenvolvimento/`, `produtividade/`, `financas/`,
-> `criacao-conteudo/`) foram removidas: este repositório é o playbook operacional da Aegis e
-> todos os prompts são de DevOps. A convenção "uma categoria por domínio" segue valendo — uma
-> nova categoria pode ser criada quando houver prompts de outro domínio.
+> Este playbook é só de DevOps; as demais categorias do template foram removidas. A convenção
+> "uma categoria por domínio" segue valendo — uma nova pasta nasce quando houver prompt de outro domínio.
 
-## Contribuindo
+## Testes e integração contínua
 
-Antes de adicionar ou alterar um prompt, revisar [`CLAUDE.md`](./CLAUDE.md) — a seção **Manutenção da documentação** lista todos os arquivos que precisam ser atualizados junto com a mudança (este índice incluso).
+O playbook é testado, não só guardado:
+
+- **Determinístico (CP08):** `triagem-de-pods`, `nota-de-triagem` e `networkpolicy-sentinel`
+  têm `promptfooconfig.yaml` com asserts de formato + limites de latência e custo.
+- **LLM-as-judge (CP09):** `causa-raiz` (saída aberta) tem um gate de qualidade por juiz LLM,
+  calibrado contra pontuação humana (ver `devops/causa-raiz/`).
+- **Pipeline (CP10):** [`.github/workflows/promptfoo.yml`](./.github/workflows/promptfoo.yml)
+  roda a suíte a cada pull request — os asserts determinísticos barram o build, o juiz LLM é
+  informativo. A justificativa do desenho do gate está em
+  [`.github/workflows/JUSTIFICATIVA.md`](./.github/workflows/JUSTIFICATIVA.md).
+
+## Como usar
+
+1. Abrir o `README.md` do prompt para entender objetivo, parâmetros e limitações.
+2. Copiar o conteúdo do `prompt.md` e substituir os placeholders `{{variavel}}` pelos valores
+   reais (o snapshot, o alerta, os artefatos…).
+3. Rodar no modelo de sua escolha (chat, playground ou API).
+
+## Como adicionar ou alterar um prompt
+
+1. Escolher a categoria existente que melhor se encaixa (ou criar uma nova pasta na raiz, em
+   `kebab-case`, com seu próprio `README.md` de escopo).
+2. Criar a pasta do prompt nomeada pelo **resultado** e escrever `prompt.md` + `README.md` com
+   o **mesmo frontmatter** (`versao: 1.0.0` no nascimento).
+3. Adicionar `promptfooconfig.yaml` quando o prompt for testável.
+4. Atualizar os índices (este README e o da categoria) e commitar com mensagem semântica
+   (`feat(<categoria>): ...`). Evoluções posteriores incrementam o campo `versao`.
