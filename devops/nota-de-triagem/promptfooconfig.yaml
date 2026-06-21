@@ -1,0 +1,61 @@
+# CP08 — testes determinísticos da nota de triagem.
+# Roda os 3 alertas crus do CP02 contra 2 provedores (Google + Meta/Llama via Ollama).
+# Exec: a partir desta pasta, `npx promptfoo@latest eval` (ou `-c` apontando este arquivo).
+description: Nota de triagem padronizada — formato de 5 rótulos
+
+prompts:
+  - file://prompt.md
+
+providers:
+  - id: google:gemini-2.5-flash    # disponível no free tier; thinkingBudget:0 desliga reasoning -> latência < 5s
+    config:
+      generationConfig:
+        thinkingConfig:
+          thinkingBudget: 0
+  - groq:llama-3.3-70b-versatile   # GROQ_API_KEY (free tier) — Meta/Llama na nuvem
+
+# Asserts comuns a todos os casos (o formato é o mesmo independente do alerta)
+defaultTest:
+  assert:
+    - type: contains
+      value: "ALERTA:"
+    - type: contains
+      value: "IMPACTO:"
+    - type: contains
+      value: "HIPÓTESE INICIAL:"
+    - type: contains
+      value: "AÇÃO IMEDIATA:"
+    - type: contains
+      value: "ESCALAR PARA:"
+    # escalonamento tem um handle no formato @palavra
+    - type: regex
+      value: "ESCALAR PARA:.*@\\w+"
+    # nota concisa: no máximo 8 linhas
+    - type: javascript
+      value: "output.trim().split('\\n').length <= 8"
+    # limites operacionais (CP08)
+    - type: latency
+      threshold: 5000
+    # custo: o promptfoo só calcula para provedores com tabela de preço (Gemini); Groq retorna nulo
+    # -> tolerante: valida <= US$ 0,01 quando há custo, passa quando o provedor não reporta
+    - type: javascript
+      value: "context.providerResponse?.cost == null || context.providerResponse.cost <= 0.01"
+
+tests:
+  - description: Alerta 1 — Sentinel autoscaler no teto (tenant stark-industries)
+    vars:
+      alerta_cru: >
+        2026-05-12 14:02:09 UTC [Sentinel] autoscaler hit max replicas (60/60)
+        on sentinel-api, queue depth on Relay growing 2k/min, CPU avg 88%,
+        tenant stark-industries sending 4x baseline volume after onboarding new region
+  - description: Alerta 2 — Relay reject 6% após deploy (tenant wakanda-systems)
+    vars:
+      alerta_cru: >
+        2026-05-13 03:11:00 UTC [Relay] ingest reject rate 6% for 8min,
+        tenant wakanda-systems, buffer saturated after deploy 02:55
+  - description: Alerta 3 — Forge consumer lag após falha de job
+    vars:
+      alerta_cru: >
+        2026-05-13 11:40:22 UTC [Forge] consumer lag 9min and climbing,
+        batch forge-batch-ingest delayed after previous job failure,
+        downstream Sentinel starting to lag

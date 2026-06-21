@@ -41,6 +41,14 @@ ESCALAR PARA: @relay-core se a rejeição não cair em 10min
 - A HIPÓTESE INICIAL é uma inferência, não um diagnóstico confirmado — serve para orientar
   a primeira ação, não para fechar causa-raiz (isso é o prompt `causa-raiz`).
 
+## Testes (CP08)
+`promptfooconfig.yaml` nesta pasta, rodado contra os 3 alertas crus do CP02 em 2 provedores
+(Gemini 2.5-flash + Groq/Llama 3.3). Asserts: contém os 5 rótulos (ALERTA / IMPACTO / HIPÓTESE
+INICIAL / AÇÃO IMEDIATA / ESCALAR PARA), regex `ESCALAR PARA:.*@\w+`, ≤ 8 linhas, latência ≤ 5s,
+custo ≤ US$ 0,01. **Resultado: 5 passed / 0 failed** (+1 erro 503 transitório do Google numa
+chamada — instabilidade de servidor, não regressão de prompt). Setup e ajustes comuns: ver o
+[README da categoria](../README.md) (seção *Testes (CP08)*).
+
 ## Curadoria (CP02)
 - **Técnica:** few-shot (híbrido). Os três exemplos do padrão da Aegis ficam embutidos no
   prompt como demonstração de formato/tom, e uma descrição curta trava os cinco rótulos na

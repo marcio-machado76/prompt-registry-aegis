@@ -77,6 +77,14 @@ O valor deste item está no ciclo dirigido — não na primeira saída.
   porta de escuta do Sentinel) vira comentário de advertência, não uma regra completa.
 - Pressupõe cluster Kubernetes ≥ 1.21 para o seletor de namespace por `kubernetes.io/metadata.name`.
 
+## Testes (CP08)
+`promptfooconfig.yaml` nesta pasta, rodado contra o manifesto permissivo + regras + mapa do CP06
+em 2 provedores (Gemini 2.5-flash + Groq/Llama 3.3). Asserts na NetworkPolicy gerada:
+`kind: NetworkPolicy` com `Ingress` e `Egress`, sem allow-all (`- {}`), egress libera Forge (5432)
+e Cerebro (9200), ingress libera `app: relay`, toda regra com comentário (`#`), latência ≤ 5s e
+custo ≤ US$ 0,01. **Resultado: 2 passed / 0 failed / 0 errors.** Setup e ajustes comuns: ver o
+[README da categoria](../README.md) (seção *Testes (CP08)*).
+
 ## Curadoria (CP06)
 - **Técnica:** geração + **self-critique / refino iterativo** dirigido por humano. O prompt da
   biblioteca produz a v1; o ciclo de verificação (a IA critica a própria saída, levantando as

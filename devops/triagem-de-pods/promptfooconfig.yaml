@@ -1,0 +1,110 @@
+# CP08 — testes determinísticos da triagem de pods.
+# Roda os 3 snapshots do CP01 contra 2 provedores (Google + Meta/Llama via Ollama).
+# Exec: a partir desta pasta, `npx promptfoo@latest eval`.
+description: Triagem de pods Kubernetes a partir de um snapshot
+
+prompts:
+  - file://prompt.md
+
+providers:
+  - id: google:gemini-2.5-flash    # disponível no free tier; thinkingBudget:0 desliga reasoning -> latência < 5s
+    config:
+      generationConfig:
+        thinkingConfig:
+          thinkingBudget: 0
+  - groq:llama-3.3-70b-versatile   # GROQ_API_KEY (free tier) — Meta/Llama na nuvem
+
+# Limites operacionais valem para todos os casos
+defaultTest:
+  assert:
+    - type: latency
+      threshold: 5000
+    # custo: o promptfoo só calcula para provedores com tabela de preço (Gemini); Groq retorna nulo
+    # -> tolerante: valida <= US$ 0,01 quando há custo, passa quando o provedor não reporta
+    - type: javascript
+      value: "context.providerResponse?.cost == null || context.providerResponse.cost <= 0.01"
+
+tests:
+  - description: Entrada 1 — pod reiniciando (OOMKilled)
+    vars:
+      snapshot_cluster: |
+        $ kubectl get pods -n sentinel-prod
+        NAME                            READY   STATUS             RESTARTS       AGE
+        sentinel-api-7d9c8b6f4-2xk9p    1/1     Running            0              6d
+        sentinel-api-7d9c8b6f4-h4m2t    0/1     CrashLoopBackOff   14 (90s ago)   42m
+        sentinel-worker-5b8f9c8d-jq7rs  1/1     Running            0              6d
+        sentinel-scheduler-6c4d7f-nn8vx 1/1     Running            0              6d
+        $ kubectl describe pod sentinel-api-7d9c8b6f4-h4m2t -n sentinel-prod
+            State:          Waiting
+              Reason:       CrashLoopBackOff
+            Last State:     Terminated
+              Reason:       OOMKilled
+              Exit Code:    137
+            Limits:         memory: 512Mi
+            Requests:       memory: 256Mi
+        Events:
+          Warning  BackOff  2m (x18 over 40m)   kubelet  Back-off restarting failed container api
+        $ kubectl logs sentinel-api-7d9c8b6f4-h4m2t -n sentinel-prod --previous
+        2026-05-13 10:15:12 [FATAL] [runtime] out of memory, shutting down process
+    assert:
+      # cita o pod problemático
+      - type: contains
+        value: "sentinel-api-7d9c8b6f4-h4m2t"
+      # e a causa (OOMKilled ou memória)
+      - type: javascript
+        value: "/OOMKilled/i.test(output) || /mem[oó]ria/i.test(output)"
+
+  - description: Entrada 2 — pods que não sobem (ImagePullBackOff + Pending/CPU)
+    vars:
+      snapshot_cluster: |
+        $ kubectl get pods -n sentinel-prod
+        NAME                            READY   STATUS             RESTARTS   AGE
+        sentinel-api-7d9c8b6f4-2xk9p    1/1     Running            0          6d
+        sentinel-api-7d9c8b6f4-zzp10    0/1     ImagePullBackOff   0          8m
+        sentinel-ingest-8f7a9c5b-4dkqm  0/1     Pending            0          8m
+        sentinel-scheduler-6c4d7f-nn8vx 1/1     Running            0          6d
+        $ kubectl describe pod sentinel-api-7d9c8b6f4-zzp10 -n sentinel-prod
+            State:    Waiting
+              Reason: ImagePullBackOff
+            Image:    registry.aegis.io/sentinel-api:2.9.2
+        Events:
+          Warning  Failed   7m    kubelet  Failed to pull image "registry.aegis.io/sentinel-api:2.9.2": manifest unknown
+          Warning  Failed   7m    kubelet  Error: ErrImagePull
+        $ kubectl describe pod sentinel-ingest-8f7a9c5b-4dkqm -n sentinel-prod
+            State:    Waiting
+              Reason: Pending
+            Requests: cpu: 2
+        Events:
+          Warning  FailedScheduling  7m    default-scheduler  0/6 nodes are available: 6 Insufficient cpu
+    assert:
+      # cita os dois pods problemáticos
+      - type: contains
+        value: "sentinel-api-7d9c8b6f4-zzp10"
+      - type: contains
+        value: "sentinel-ingest-8f7a9c5b-4dkqm"
+      # causa 1: tag 2.9.2 / ImagePullBackOff
+      - type: javascript
+        value: "output.includes('2.9.2') || /ImagePullBackOff/i.test(output)"
+      # causa 2: falta de cpu / Insufficient
+      - type: javascript
+        value: "/Insufficient/i.test(output) || /cpu/i.test(output)"
+
+  - description: Entrada 3 — tudo saudável (não pode haver falso positivo)
+    vars:
+      snapshot_cluster: |
+        $ kubectl get pods -n sentinel-prod
+        NAME                            READY   STATUS    RESTARTS     AGE
+        sentinel-api-7d9c8b6f4-2xk9p    1/1     Running   0            6d
+        sentinel-api-7d9c8b6f4-h4m2t    1/1     Running   0            6d
+        sentinel-worker-5b8f9c8d-jq7rs  1/1     Running   1 (3d ago)   6d
+        sentinel-scheduler-6c4d7f-nn8vx 1/1     Running   0            6d
+        $ kubectl logs sentinel-api-7d9c8b6f4-2xk9p -n sentinel-prod --tail=3
+        2026-05-13 11:02:31 [INFO] [api] health check OK, 0 errors in the last 5min
+        2026-05-13 11:04:31 [INFO] [api] health check OK
+    assert:
+      # indica que não há pod problemático
+      - type: javascript
+        value: "/nenhum pod problem/i.test(output)"
+      # não classifica nenhum pod como em falha (sem o marcador de problema)
+      - type: not-contains
+        value: "🔴"
