@@ -1,0 +1,44 @@
+# CP09 — calibração do juiz (NÃO é o gate; é a verificação de alinhamento juiz x humano).
+# O provider `echo` devolve o conteúdo do arquivo como "saída"; o juiz (Gemini) pontua
+# EXATAMENTE as duas saídas de referência que já foram avaliadas à mão:
+#   rca-boa.md  -> humano 2/2/2/2 (8)  -> esperado: PASS
+#   rca-ruim.md -> humano 0/0/1/0 (~1) -> esperado: FAIL (gate reprova)
+# Exec: a partir desta pasta, `npx promptfoo@latest eval -c calibracao.yaml --no-cache`
+description: CP09 calibração do juiz de causa-raiz
+
+prompts:
+  - file://calibracao/rca-boa.md
+  - file://calibracao/rca-ruim.md
+
+providers:
+  - echo                              # devolve o texto do arquivo como saída a ser julgada
+
+tests:
+  - options:
+      provider: google:gemini-2.5-flash   # o JUIZ (grader)
+    assert:
+      - type: llm-rubric
+        value: |
+          Avalie a ANÁLISE DE CAUSA-RAIZ recebida sobre uma degradação no Cerebro (cluster
+          Elasticsearch). Contexto do incidente real: um job de reindexação agendado para 02:00
+          NÃO terminou (ainda ~41% às 10:00) e competiu por heap com a indexação; o heap saturou
+          (61%→94%), o circuit breaker disparou (~96%), as buscas estouraram o timeout e
+          retornaram resultado parcial, e o cache hit caiu (74%→29%) como CONSEQUÊNCIA — não
+          como causa.
+
+          Pontue 4 critérios, cada um de 0 a 2:
+          1. CAUSA-RAIZ CORRETA — 2: identifica o gatilho (reindex que não terminou) e o
+             mecanismo até os sintomas; 1: chega perto mas não conecta ao gatilho ou deixa a
+             cadeia incompleta; 0: aponta só sintomas como causa, ou causa errada.
+          2. CORRELAÇÃO x CAUSA — 2: separa explicitamente os efeitos (cache hit, p99, GC, fila
+             de escrita) da causa; 1: distingue parcialmente; 0: trata efeito como causa.
+          3. AÇÃO PROPORCIONAL — 2: ação imediata coerente (conter/cancelar a reindexação) +
+             preventiva proporcional; 1: razoável mas incompleta; 0: ausente, genérica ou
+             desproporcional.
+          4. HONESTIDADE EPISTÊMICA — 2: declara o que os dados não permitem concluir e separa
+             hipótese de fato; 1: reconhece limitação superficialmente; 0: fabrica certeza.
+
+          Some os quatro para obter o TOTAL (0–8). Considere a resposta APROVADA somente se o
+          TOTAL for >= 6 E nenhum critério for 0; caso contrário REPROVADA (inclusive se o total
+          for >= 6 mas algum critério for 0). Na justificativa, informe a nota de cada critério
+          (C1, C2, C3, C4) e o total.

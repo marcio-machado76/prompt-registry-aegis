@@ -1,0 +1,86 @@
+# CP09 — gate de qualidade do prompt de causa-raiz (LLM-as-judge).
+# Roda o prompt contra os artefatos do Cerebro (CP03) e o juiz pontua a saída pela rubrica.
+# Gerador: Groq/Llama 3.3 (independente do juiz). Juiz: Gemini 2.5-flash.
+# Gate: aprova só se TOTAL >= 6 E nenhum critério = 0 (a rubrica abaixo decide o pass/fail).
+# Exec: a partir desta pasta, `npx promptfoo@latest eval --no-cache`.
+# Calibração do juiz documentada em calibracao.yaml (saídas de referência boa/ruim).
+description: CP09 gate de qualidade — causa-raiz (LLM-as-judge)
+
+prompts:
+  - file://prompt.md
+
+providers:
+  - groq:llama-3.3-70b-versatile     # gerador da análise (independente do juiz)
+
+tests:
+  - description: Artefatos do Cerebro (CP03) — config + métricas + logs sanitizados
+    options:
+      provider: google:gemini-2.5-flash   # o JUIZ
+    vars:
+      config: |
+        # cerebro.yaml — configuração do cluster Elasticsearch
+        cerebro:
+          shards: 12
+          replicas_per_shard: 1
+          jvm_heap: 8g
+          refresh_interval: 1s
+          reindex_job:
+            schedule: "0 2 * * *"     # roda todo dia às 02:00
+            avg_duration_min: 90      # normalmente termina ~03:30
+          query_cache:
+            enabled: true
+            size_mb: 512
+      metricas: |
+        timestamp              search_p99_ms   indexed_docs_per_s   heap_used_pct   cache_hit_pct
+        2026-05-13 08:00 UTC   850             4200                 61              74
+        2026-05-13 08:30 UTC   1100            4100                 68              71
+        2026-05-13 09:00 UTC   2300            9800                 79              58
+        2026-05-13 09:30 UTC   4100            11200                88              41
+        2026-05-13 10:00 UTC   6700            12400                94              29
+      logs: |
+        [2026-05-13T08:02:11][INFO] reindex task [88123] (scheduled 02:00) progress, created [3.8M]/[10M] docs (38%)
+        [2026-05-13T08:14:33][WARN] [gc][young] duration [620ms], heap [4.9gb]->[3.1gb]/[8gb]
+        [2026-05-13T08:41:07][INFO] now throttling indexing for shard [logs-2026.05][7]
+        [2026-05-13T09:03:55][WARN] write thread pool queue at [150/200]
+        [2026-05-13T09:12:48][WARN] [gc][old] duration [1.1s], heap [6.3gb]->[5.9gb]/[8gb]
+        [2026-05-13T09:20:02][INFO] reindex task [88123] progress, created [4.0M]/[10M] docs (40%)
+        [2026-05-13T09:31:17][WARN] [parent] usage [6.9gb/8gb] (86%), approaching limit
+        [2026-05-13T09:44:29][WARN] slow query on shard [logs-2026.05][7] took [2380ms]
+        [2026-05-13T09:51:08][WARN] write thread pool queue at [188/200]
+        [2026-05-13T09:58:41][WARN] write thread pool queue full [200/200], rejecting bulk
+        [2026-05-13T09:58:43][WARN] [gc][old] duration [1.8s], heap [7.6gb]->[7.4gb]/[8gb]
+        [2026-05-13T09:58:44][INFO] reindex task [88123] still running, created [4.1M]/[10M] docs (41%)
+        [2026-05-13T09:58:45][WARN] indexing buffer above limit, throttling shard [logs-2026.05][7]
+        [2026-05-13T09:58:46][DEBUG] shard [logs-2026.05][7] search took [5031ms] (timeout 5000ms)
+        [2026-05-13T09:58:46][ERROR] search returned partial results: 11/12 shards succeeded
+        [2026-05-13T09:58:46][WARN] [parent] circuit breaker tripped, usage [7.7gb/8gb] (96%)
+        [2026-05-13T09:58:47][WARN] query cache eviction rate spiking, hit_ratio dropped to 0.29
+        [2026-05-13T10:01:12][ERROR] CircuitBreakingException: Data too large [7.9gb/8gb]
+        [2026-05-13T10:03:39][WARN] write thread pool rejected [1284] bulk requests in last 5min
+        [2026-05-13T10:05:50][ERROR] all shards failed for index [logs-2026.05] on 3 of last 20 queries
+    assert:
+      - type: llm-rubric
+        value: |
+          Avalie a ANÁLISE DE CAUSA-RAIZ recebida sobre uma degradação no Cerebro (cluster
+          Elasticsearch). Contexto do incidente real: um job de reindexação agendado para 02:00
+          NÃO terminou (ainda ~41% às 10:00) e competiu por heap com a indexação; o heap saturou
+          (61%→94%), o circuit breaker disparou (~96%), as buscas estouraram o timeout e
+          retornaram resultado parcial, e o cache hit caiu (74%→29%) como CONSEQUÊNCIA — não
+          como causa.
+
+          Pontue 4 critérios, cada um de 0 a 2:
+          1. CAUSA-RAIZ CORRETA — 2: identifica o gatilho (reindex que não terminou) e o
+             mecanismo até os sintomas; 1: chega perto mas não conecta ao gatilho ou deixa a
+             cadeia incompleta; 0: aponta só sintomas como causa, ou causa errada.
+          2. CORRELAÇÃO x CAUSA — 2: separa explicitamente os efeitos (cache hit, p99, GC, fila
+             de escrita) da causa; 1: distingue parcialmente; 0: trata efeito como causa.
+          3. AÇÃO PROPORCIONAL — 2: ação imediata coerente (conter/cancelar a reindexação) +
+             preventiva proporcional; 1: razoável mas incompleta; 0: ausente, genérica ou
+             desproporcional.
+          4. HONESTIDADE EPISTÊMICA — 2: declara o que os dados não permitem concluir e separa
+             hipótese de fato; 1: reconhece limitação superficialmente; 0: fabrica certeza.
+
+          Some os quatro para obter o TOTAL (0–8). Considere a resposta APROVADA somente se o
+          TOTAL for >= 6 E nenhum critério for 0; caso contrário REPROVADA (inclusive se o total
+          for >= 6 mas algum critério for 0). Na justificativa, informe a nota de cada critério
+          (C1, C2, C3, C4) e o total.

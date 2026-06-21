@@ -51,6 +51,30 @@ os sinais técnicos que sustentam o diagnóstico.*
   aberto (o prompt pede que elas sejam declaradas).
 - Mesmo um output forte pode conter detalhes fabricados — exige revisão humana (ver curadoria).
 
+## Testes (CP09) — gate de qualidade com LLM-as-judge
+Saída aberta → avaliada por **juiz LLM**, não por regex. Arquivos: `promptfooconfig.yaml` (gate)
+e `calibracao.yaml` + `calibracao/` (evidência da calibração).
+
+- **Rubrica (4 critérios, 0–2, total 0–8):** causa-raiz correta · correlação×causa · ação
+  proporcional · honestidade epistêmica. **Gate:** aprova só se **total ≥ 6 E nenhum critério = 0**
+  (um zero reprova mesmo com total ≥ 6).
+- **Juiz × gerador separados:** juiz = `google:gemini-2.5-flash`; gerador da análise no gate =
+  `groq:llama-3.3-70b-versatile` (evita autoavaliação).
+- **Calibração (contra duas saídas de referência já pontuadas à mão):**
+  - `calibracao/rca-boa.md` (humano 2/2/2/2) → juiz **PASS**.
+  - `calibracao/rca-ruim.md` (humano 0/0/1/0) → juiz **FAIL** com `C1=0 C2=0 C3=0 C4=0`,
+    identificando corretamente o cache tratado como causa (é efeito), o "reiniciar o cluster"
+    desproporcional e a certeza fabricada.
+  - Diferença máxima juiz × humano: **1 ponto** (no critério de ação) → dentro da tolerância;
+    vereditos batem. **Juiz calibrado sem ajuste de nota.**
+- **Ajuste feito na calibração (o que quebrou e o conserto):** a 1ª versão da rubrica forçava o
+  juiz a "começar com a linha C1=…", em texto livre. O `llm-rubric` do promptfoo espera um JSON
+  `{pass, reason}` do grader; o formato livre quebrava o parse e o juiz **reprovava as duas**
+  saídas (até a boa). Correção: a rubrica passou a só **descrever os critérios + a regra do
+  gate**, deixando o promptfoo cuidar do JSON. Aí os vereditos saíram corretos.
+- **Gate em ação:** rodado contra os artefatos do Cerebro (CP03), a análise gerada pelo
+  Llama 3.3 foi avaliada pelo juiz e **aprovada** (PASS) — o gate roda automático a cada execução.
+
 ## Curadoria (CP03)
 - **Técnica:** Chain-of-Thought **exposto e estruturado**. Diferente de `triagem-de-pods` e
   `nota-de-triagem` (onde o CoT fica interno), aqui o raciocínio é o produto: a saída externa

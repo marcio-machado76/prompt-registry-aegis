@@ -1,1 +1,4 @@
 */settings.local.json
+# saídas transitórias do promptfoo eval
+**/cal.json
+**/gate.json
