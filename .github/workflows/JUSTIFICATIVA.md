@@ -66,6 +66,14 @@ limit (429)** — não é regressão do prompt, mas derrubaria o gate determiní
 A distinção *regressão × flake transitório* é parte do desenho: o gate confia nas retentativas
 do promptfoo e, no limite, no re-run manual — sem retry agressivo que esconda regressão de verdade.
 
+**Caso real observado:** num run, o assert de **latência** do Gemini reprovou (>5s) com o
+**conteúdo correto** — era throttling do free tier (concorrência 4 disparava chamadas em rajada,
+estourava o RPM → backoff → latência inflada). Não é regressão de prompt. Correção adotada:
+rodar o eval **serial (`-j 1`)** no pipeline, espaçando as chamadas para não estourar o RPM —
+assim a latência medida reflete a resposta real do modelo, não o tempo de espera por throttling.
+Alternativa se ainda flutuar (descartada por ora): tornar latência/custo **informativos** no CI
+(só o conteúdo barra), já que latência depende da carga do provedor, não da qualidade do prompt.
+
 ## Cobertura de testes da biblioteca
 
 | Prompt | Tipo de teste | No gate? |

@@ -38,7 +38,9 @@ jobs:
             devops/nota-de-triagem/promptfooconfig.yaml \
             devops/networkpolicy-sentinel/promptfooconfig.yaml; do
             echo "::group::promptfoo eval $cfg"
-            npx promptfoo@latest eval -c "$cfg" --no-cache
+            # -j 1 (serial): evita disparar chamadas em rajada e estourar o RPM do free tier,
+            # o que inflaria a latência medida e reprovaria o assert de latência por throttling.
+            npx promptfoo@latest eval -c "$cfg" --no-cache -j 1
             echo "::endgroup::"
           done
 
@@ -52,7 +54,7 @@ jobs:
             devops/estrategia-de-backpressure/promptfooconfig.yaml \
             devops/migracao-batch-para-streaming/promptfooconfig.yaml; do
             echo "::group::juiz (informativo) $cfg"
-            npx promptfoo@latest eval -c "$cfg" --no-cache || true
+            npx promptfoo@latest eval -c "$cfg" --no-cache -j 1 || true
             echo "::endgroup::"
           done
 
