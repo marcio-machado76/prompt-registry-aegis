@@ -7,11 +7,7 @@ prompts:
   - file://prompt.md
 
 providers:
-  - id: google:gemini-2.5-flash    # disponível no free tier; thinkingBudget:0 desliga reasoning -> latência < 5s
-    config:
-      generationConfig:
-        thinkingConfig:
-          thinkingBudget: 0
+  - openai:gpt-4o-mini             # OPENAI_API_KEY — rápido, barato e confiável (sem throttling de free tier)
   - groq:llama-3.3-70b-versatile   # GROQ_API_KEY (free tier) — Meta/Llama na nuvem
 
 # Limites operacionais valem para todos os casos

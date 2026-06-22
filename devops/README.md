@@ -33,10 +33,12 @@ Entram aqui prompts relacionados a:
 ## Testes (CP08) — setup e ajustes comuns
 
 Os prompts de saída estruturada têm um `promptfooconfig.yaml` ao lado do `prompt.md`
-(o teste viaja junto com o prompt). Rodados com `npx promptfoo@latest eval --no-cache`.
+(o teste viaja junto com o prompt). Rodados com `npx promptfoo@0.121.17 eval --no-cache`.
 
-- **Provedores (dois fornecedores distintos, ambos gratuitos):**
-  `google:gemini-2.5-flash` + `groq:llama-3.3-70b-versatile` (Meta/Llama na nuvem).
+- **Provedores do gate determinístico (dois fornecedores distintos):**
+  `openai:gpt-4o-mini` + `groq:llama-3.3-70b-versatile`. Durante o desenvolvimento usei o
+  Gemini free tier, mas migrei o gate para o OpenAI por confiabilidade (ver ajuste 6). O
+  **juiz** (CP09) permanece em `gemini-2.5-flash`.
 - **Limites operacionais em todos:** latência ≤ 5s e custo ≤ US$ 0,01.
 
 **Ajustes feitos durante o CP08 (o caminho, não só o destino):**
@@ -55,6 +57,12 @@ Os prompts de saída estruturada têm um `promptfooconfig.yaml` ao lado do `prom
 5. **Erro 503 transitório** (Google "high demand") apareceu numa chamada da `nota-de-triagem` —
    não é regressão de prompt. Fica como nota para o gate do CP10: erro transitório de infra
    (503/429) ≠ regressão; o pipeline não deve reprovar o build por isso.
+6. **Gemini → OpenAI no gate de CI (CP10).** No pipeline, o Gemini free tier intermitentemente
+   estourava a latência (>5s) e dava 529/503 por throttling/overload — derrubando o build por
+   motivo **ambiental**, não regressão de prompt (o conteúdo gerado estava correto). Migrei o
+   **gate determinístico** para `openai:gpt-4o-mini` (rápido, confiável, reporta custo) + Groq,
+   mantendo `-j 1` (serial) para não estourar RPM. O juiz informativo segue no Gemini — calibrado
+   no CP09, e como não barra o build, um throttle nele não causa falso vermelho.
 
 **Resultados (`promptfoo eval`):**
 
