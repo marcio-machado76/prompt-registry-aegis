@@ -8,7 +8,7 @@ prompts:
 
 providers:
   - openai:gpt-4o-mini             # OPENAI_API_KEY — rápido, barato e confiável (sem throttling de free tier)
-  - groq:llama-3.3-70b-versatile   # GROQ_API_KEY (free tier) — Meta/Llama na nuvem
+  - anthropic:messages:claude-haiku-4-5  # ANTHROPIC_API_KEY - Claude Haiku 4.5 (rapido, barato, confiavel)
 
 tests:
   - description: Manifesto permissivo do sentinel-prod -> versão endurecida
@@ -66,7 +66,7 @@ tests:
       # limites operacionais (CP08)
       - type: latency
         threshold: 5000
-      # custo: o promptfoo só calcula para provedores com tabela de preço (Gemini); Groq retorna nulo
+      # custo: assert tolerante - valida <= US$ 0,01 onde o provedor reporta custo (OpenAI/Anthropic)
       # -> tolerante: valida <= US$ 0,01 quando há custo, passa quando o provedor não reporta
       - type: javascript
         value: "context.providerResponse?.cost == null || context.providerResponse.cost <= 0.01"

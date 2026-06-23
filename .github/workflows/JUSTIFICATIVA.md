@@ -35,8 +35,8 @@ inverte (economia vs risco de cobertura).
 | Decisão | Escolha | Alternativas consideradas |
 |---|---|---|
 | **Gatilho** | `pull_request` + `workflow_dispatch` | Adicionar `push: main` (re-roda após merge — redundante se o PR já barrou, mas pega push direto); `schedule` noturno (pega *drift* de provedor) — descartados por ora para não gastar à toa |
-| **Chaves** | GitHub **Secrets** do repo (`GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GROQ_API_KEY`) | Hardcode no YAML (**nunca** — vazamento); OIDC/cofre externo (exagero para chaves de free tier) |
-| **Custo por PR** | Modelos free/baratos (Gemini free tier, Groq free) → ~centavos; rodar só em PR (não em todo push) já corta execuções | Rodar em todo push dobraria o custo sem ganho real (o PR é onde a regressão é barrada antes do merge) |
+| **Chaves** | GitHub **Secrets** do repo (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`) | Hardcode no YAML (**nunca** — vazamento); OIDC/cofre externo (exagero aqui) |
+| **Custo por PR** | Modelos baratos (gpt-4o-mini + Claude Haiku 4.5 no gate) → ~centavos por PR; rodar só em PR (não em todo push) já corta execuções | Rodar em todo push dobraria o custo sem ganho real (o PR é onde a regressão é barrada antes do merge) |
 
 O `workflow_dispatch` foi adicionado para rodar a suíte **manualmente** (re-checar após um erro
 transitório, validar sem abrir PR) — custo zero, conveniência alta.

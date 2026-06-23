@@ -1,6 +1,6 @@
 # CP10 — teste informativo (LLM-as-judge) do prompt de backpressure (saída aberta).
 # INFORMATIVO: não barra o build (decisão a1); é sinal de qualidade no PR.
-# Padrão de juiz idêntico ao CP09 (causa-raiz). Juiz: Gemini 2.5-flash; gerador: Groq/Llama.
+# Padrão de juiz idêntico ao CP09 (causa-raiz). Juiz: Gemini 2.5-flash; gerador: Claude Haiku 4.5.
 # Exec: a partir desta pasta, `npx promptfoo@latest eval --no-cache`.
 description: CP10 juiz informativo — estratégia de backpressure
 
@@ -8,7 +8,7 @@ prompts:
   - file://prompt.md
 
 providers:
-  - groq:llama-3.3-70b-versatile     # gerador (independente do juiz)
+  - anthropic:messages:claude-haiku-4-5  # gerador da analise (independente do juiz Gemini)
 
 tests:
   - description: Cenário do Relay (CP04)

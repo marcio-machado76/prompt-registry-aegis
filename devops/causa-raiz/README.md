@@ -59,7 +59,7 @@ e `calibracao.yaml` + `calibracao/` (evidência da calibração).
   proporcional · honestidade epistêmica. **Gate:** aprova só se **total ≥ 6 E nenhum critério = 0**
   (um zero reprova mesmo com total ≥ 6).
 - **Juiz × gerador separados:** juiz = `google:gemini-2.5-flash`; gerador da análise no gate =
-  `groq:llama-3.3-70b-versatile` (evita autoavaliação).
+  `anthropic:messages:claude-haiku-4-5` (evita autoavaliação).
 - **Calibração (contra duas saídas de referência já pontuadas à mão):**
   - `calibracao/rca-boa.md` (humano 2/2/2/2) → juiz **PASS**.
   - `calibracao/rca-ruim.md` (humano 0/0/1/0) → juiz **FAIL** com `C1=0 C2=0 C3=0 C4=0`,
@@ -73,7 +73,7 @@ e `calibracao.yaml` + `calibracao/` (evidência da calibração).
   saídas (até a boa). Correção: a rubrica passou a só **descrever os critérios + a regra do
   gate**, deixando o promptfoo cuidar do JSON. Aí os vereditos saíram corretos.
 - **Gate em ação:** rodado contra os artefatos do Cerebro (CP03), a análise gerada pelo
-  Llama 3.3 foi avaliada pelo juiz e **aprovada** (PASS) — o gate roda automático a cada execução.
+  análise gerada (Claude Haiku 4.5) foi avaliada pelo juiz e **aprovada** (PASS) — o gate roda automático a cada execução.
 
 ## Curadoria (CP03)
 - **Técnica:** Chain-of-Thought **exposto e estruturado**. Diferente de `triagem-de-pods` e

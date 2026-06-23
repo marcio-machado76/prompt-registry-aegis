@@ -56,7 +56,7 @@ que está atualmente Running.
 
 ## Testes (CP08)
 `promptfooconfig.yaml` nesta pasta, rodado contra os 3 snapshots do CP01 em 2 provedores
-(OpenAI gpt-4o-mini + Groq/Llama 3.3). Asserts por entrada: E1 cita `sentinel-api-7d9c8b6f4-h4m2t`
+(OpenAI gpt-4o-mini + Claude Haiku 4.5). Asserts por entrada: E1 cita `sentinel-api-7d9c8b6f4-h4m2t`
 + causa (OOMKilled/memória); E2 cita os 2 pods + causas (2.9.2/ImagePullBackOff e Insufficient/cpu);
 E3 indica que não há pod problemático e não usa o marcador 🔴. Mais latência ≤ 5s e custo ≤ US$ 0,01.
 **Resultado: 6 passed / 0 failed / 0 errors.** Setup e ajustes comuns: ver o

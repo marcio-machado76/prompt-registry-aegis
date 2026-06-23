@@ -1,6 +1,6 @@
 # CP09 — gate de qualidade do prompt de causa-raiz (LLM-as-judge).
 # Roda o prompt contra os artefatos do Cerebro (CP03) e o juiz pontua a saída pela rubrica.
-# Gerador: Groq/Llama 3.3 (independente do juiz). Juiz: Gemini 2.5-flash.
+# Gerador: Claude Haiku 4.5 (independente do juiz). Juiz: Gemini 2.5-flash.
 # Gate: aprova só se TOTAL >= 6 E nenhum critério = 0 (a rubrica abaixo decide o pass/fail).
 # Exec: a partir desta pasta, `npx promptfoo@latest eval --no-cache`.
 # Calibração do juiz documentada em calibracao.yaml (saídas de referência boa/ruim).
@@ -10,7 +10,7 @@ prompts:
   - file://prompt.md
 
 providers:
-  - groq:llama-3.3-70b-versatile     # gerador da análise (independente do juiz)
+  - anthropic:messages:claude-haiku-4-5  # gerador da analise (independente do juiz Gemini)
 
 tests:
   - description: Artefatos do Cerebro (CP03) — config + métricas + logs sanitizados

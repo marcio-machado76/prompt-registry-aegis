@@ -1,6 +1,6 @@
 # CP10 — teste informativo (LLM-as-judge) da cadeia de migração (saída aberta).
 # INFORMATIVO: não barra o build (decisão a1). Como a cadeia tem 3 elos, este teste avalia o
-# ELO 1 (diagnóstico) como representativo — a porta de entrada da cadeia. Juiz: Gemini; gerador: Groq.
+# ELO 1 (diagnóstico) como representativo — a porta de entrada da cadeia. Juiz: Gemini; gerador: Claude Haiku 4.5.
 # Exec: a partir desta pasta, `npx promptfoo@latest eval --no-cache`.
 description: "CP10 juiz informativo — migração batch→streaming (elo 1: diagnóstico)"
 
@@ -8,7 +8,7 @@ prompts:
   - file://prompts/01-diagnostico.md
 
 providers:
-  - groq:llama-3.3-70b-versatile     # gerador (independente do juiz)
+  - anthropic:messages:claude-haiku-4-5  # gerador da analise (independente do juiz Gemini)
 
 tests:
   - description: Estado atual do Forge (CP05)

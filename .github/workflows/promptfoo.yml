@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}   # gate determinístico (gpt-4o-mini)
-      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}        # gate determinístico (Llama 3.3)
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}  # gate (Claude Haiku 4.5) + gerador dos juizes
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}    # juiz informativo (Gemini 2.5-flash)
       GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
     steps:
