@@ -44,8 +44,8 @@ ESCALAR PARA: @relay-core se a rejeição não cair em 10min
 ## Testes (CP08)
 `promptfooconfig.yaml` nesta pasta, rodado contra os 3 alertas crus do CP02 em 2 provedores
 (OpenAI gpt-4o-mini + Claude Haiku 4.5). Asserts: contém os 5 rótulos (ALERTA / IMPACTO / HIPÓTESE
-INICIAL / AÇÃO IMEDIATA / ESCALAR PARA), regex `ESCALAR PARA:.*@\w+`, ≤ 8 linhas, latência ≤ 5s,
-custo ≤ US$ 0,01. **Resultado: 5 passed / 0 failed** (+1 erro 503 transitório do Google numa
+INICIAL / AÇÃO IMEDIATA / ESCALAR PARA), regex `ESCALAR PARA:.*@\w+`, ≤ 8 linhas,
+custo ≤ US$ 0,01 (latência informativa). **Resultado: 5 passed / 0 failed** (+1 erro 503 transitório do Google numa
 chamada — instabilidade de servidor, não regressão de prompt). Setup e ajustes comuns: ver o
 [README da categoria](../README.md) (seção *Testes (CP08)*).
 

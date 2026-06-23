@@ -8,7 +8,7 @@ o que se ganha e o que se perde, e por que a escolhida.
 
 | Alternativa | Ganha | Perde |
 |---|---|---|
-| **(escolhida) Só asserts determinísticos barram; juiz LLM é informativo** | Gate reproduzível e confiável; um PR bom nunca é reprovado por flutuação do juiz | Uma regressão de qualidade que *só* o juiz pegaria não bloqueia o merge sozinha |
+| **(escolhida) Barra por conteúdo + custo; juiz LLM e latência são informativos** | Gate reproduzível; um PR com saída correta não é reprovado por flutuação do juiz nem por lentidão do provedor | Uma regressão que *só* o juiz pegaria não bloqueia o merge sozinha |
 | Juiz também barra (com threshold) | Pega regressão de qualidade automaticamente | Juiz é não-determinístico — pode reprovar um build por azar (falso vermelho), corroendo a confiança no CI |
 
 **Por quê:** o gate precisa ser determinístico para ser confiável. O juiz (CP09) flutua entre
@@ -17,6 +17,8 @@ no comentário do PR** (sinal de qualidade visível ao revisor), mas quem **barr
 determinístico. A regressão de qualidade fica coberta pela combinação *comentário do juiz +
 revisão humana*. Se um dia quisermos o juiz barrando, o caminho é dar **margem** (ex.: corte em
 5/8 em vez de 6/8) e **retentativas** para absorver a flutuação — registrado, mas não adotado agora.
+Pelo mesmo princípio, a **latência** também é informativa (não barra): ela reflete a velocidade do
+provedor e o tamanho da saída, não a qualidade do prompt — detalhe na seção 5.
 
 ## 2. Suíte inteira ou só os prompts alterados?
 
@@ -71,8 +73,14 @@ do promptfoo e, no limite, no re-run manual — sem retry agressivo que esconda 
 estourava o RPM → backoff → latência inflada). Não é regressão de prompt. Correção adotada:
 rodar o eval **serial (`-j 1`)** no pipeline, espaçando as chamadas para não estourar o RPM —
 assim a latência medida reflete a resposta real do modelo, não o tempo de espera por throttling.
-Alternativa se ainda flutuar (descartada por ora): tornar latência/custo **informativos** no CI
-(só o conteúdo barra), já que latência depende da carga do provedor, não da qualidade do prompt.
+**Decisão final (adotada):** ao migrar para OpenAI/Anthropic (confiáveis, mas mais lentos que o
+Groq/LPU em saída longa), o `assert latency` de 5s passou a reprovar saídas **corretas** que
+demoram 6–10s (ex.: a NetworkPolicy de ~80 linhas leva ~10s para ser gerada). Como latência
+reflete provedor + tamanho da saída — não regressão de prompt — **tornei a latência informativa**:
+removida do gate, mas o promptfoo continua reportando a duração no resumo. O gate barra só por
+**conteúdo + custo**. O `cost` permanece gateando (modelos baratos passam folgado, e ele protege
+contra uma troca acidental para modelo caro). Os 5s foram validados no CP08 com os provedores
+rápidos; o número segue como alvo operacional do prompt, fora do gate.
 
 ## Cobertura de testes da biblioteca
 

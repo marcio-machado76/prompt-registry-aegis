@@ -10,11 +10,10 @@ providers:
   - openai:gpt-4o-mini             # OPENAI_API_KEY — rápido, barato e confiável (sem throttling de free tier)
   - anthropic:messages:claude-haiku-4-5  # ANTHROPIC_API_KEY - Claude Haiku 4.5 (rapido, barato, confiavel)
 
-# Limites operacionais valem para todos os casos
+# Gate por CONTEÚDO + custo. Latência é informativa: o promptfoo reporta a duração no resumo,
+# mas ela NÃO barra o build (reflete velocidade do provedor/tamanho da saída, não regressão). Ver JUSTIFICATIVA.
 defaultTest:
   assert:
-    - type: latency
-      threshold: 5000
     # custo: assert tolerante - valida <= US$ 0,01 onde o provedor reporta custo (OpenAI/Anthropic)
     # -> tolerante: valida <= US$ 0,01 quando há custo, passa quando o provedor não reporta
     - type: javascript

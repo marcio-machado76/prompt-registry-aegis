@@ -39,7 +39,9 @@ Os prompts de saída estruturada têm um `promptfooconfig.yaml` ao lado do `prom
   `openai:gpt-4o-mini` + `anthropic:messages:claude-haiku-4-5`. Durante o desenvolvimento passei
   por Gemini free tier e Groq, mas consolidei o gate em OpenAI + Anthropic por confiabilidade
   (ver ajuste 6). O **juiz** (CP09) permanece em `gemini-2.5-flash`.
-- **Limites operacionais em todos:** latência ≤ 5s e custo ≤ US$ 0,01.
+- **O que barra:** conteúdo (asserts determinísticos) + **custo ≤ US$ 0,01**. A **latência é
+  informativa** — o promptfoo reporta a duração, mas ela não barra o build (reflete a velocidade
+  do provedor e o tamanho da saída, não regressão de prompt; ver ajuste 7 e a JUSTIFICATIVA).
 
 **Ajustes feitos durante o CP08 (o caminho, não só o destino):**
 1. **Ollama (local) → Groq.** Comecei com Llama local (Ollama) pela privacidade e custo zero;
@@ -64,6 +66,13 @@ Os prompts de saída estruturada têm um `promptfooconfig.yaml` ao lado do `prom
    `openai:gpt-4o-mini` + `anthropic:messages:claude-haiku-4-5` (ambos rápidos, confiáveis e com
    billing por API), mantendo `-j 1` (serial). O juiz informativo segue no Gemini — calibrado no
    CP09, e como não barra o build, um throttle nele não causa falso vermelho.
+7. **Latência → informativa (não barra).** Com OpenAI/Anthropic (confiáveis, mas mais lentos que
+   o Groq/LPU em saída longa), o `assert latency` de 5s reprovava casos de **conteúdo correto**
+   só por demorarem 6–10s (ex.: a NetworkPolicy de ~80 linhas leva ~10s para ser gerada). Como
+   latência reflete velocidade do provedor e tamanho da saída — não regressão de prompt — removi
+   o `assert latency` do gate; o promptfoo continua **reportando** a duração no resumo. O gate
+   passa a barrar só por **conteúdo + custo**. (Validado no CP08 com os provedores rápidos, onde
+   os 5s eram cumpridos; a decisão de não-gatear é o refinamento da regra a1 do CP10.)
 
 **Resultados (`promptfoo eval`):**
 

@@ -81,8 +81,7 @@ O valor deste item está no ciclo dirigido — não na primeira saída.
 `promptfooconfig.yaml` nesta pasta, rodado contra o manifesto permissivo + regras + mapa do CP06
 em 2 provedores (OpenAI gpt-4o-mini + Claude Haiku 4.5). Asserts na NetworkPolicy gerada:
 `kind: NetworkPolicy` com `Ingress` e `Egress`, sem allow-all (`- {}`), egress libera Forge (5432)
-e Cerebro (9200), ingress libera `app: relay`, toda regra com comentário (`#`), latência ≤ 5s e
-custo ≤ US$ 0,01. **Resultado: 2 passed / 0 failed / 0 errors.** Setup e ajustes comuns: ver o
+e Cerebro (9200), ingress libera `app: relay`, toda regra com comentário (`#`) e custo ≤ US$ 0,01 (latência informativa). **Resultado: 2 passed / 0 failed / 0 errors.** Setup e ajustes comuns: ver o
 [README da categoria](../README.md) (seção *Testes (CP08)*).
 
 ## Curadoria (CP06)
